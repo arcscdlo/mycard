@@ -1,0 +1,10 @@
+{
+  "name": "applecardpt",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Apple Card PT — checkout com Stripe (MB WAY + Multibanco)",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {}
+}

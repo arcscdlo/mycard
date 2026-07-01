@@ -1,22 +1,13 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "outputDirectory": "site",
-  "rewrites": [
-    { "source": "/", "destination": "/pre/acessar/03/index.html" },
-    { "source": "/verificando", "destination": "/pre/acessar/03/index.html" },
-    { "source": "/verificando/", "destination": "/pre/acessar/03/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(self), microphone=(), geolocation=(), payment=()" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://analytics.tiktok.com https://connect.facebook.net https://www.googletagmanager.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://analytics.tiktok.com https://www.facebook.com https://connect.facebook.net https://www.googletagmanager.com https://googleads.g.doubleclick.net https://www.google.com https://www.googleadservices.com; connect-src 'self' https://analytics.tiktok.com https://business-api.tiktok.com https://www.facebook.com https://graph.facebook.com https://www.googletagmanager.com https://googleads.g.doubleclick.net https://www.googleadservices.com https://www.google.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self'" }
-      ]
-    }
+  "version": 2,
+  "routes": [
+    { "src": "/api/stripe-transaction", "dest": "/api/stripe-transaction.js" },
+    { "src": "/api/stripe-status",      "dest": "/api/stripe-status.js"      },
+    { "src": "/api/stripe-webhook",     "dest": "/api/stripe-webhook.js"     },
+    { "src": "/api/save-selfie",        "dest": "/api/save-selfie.js"        },
+    { "src": "/api/vendas",             "dest": "/api/vendas.js"             },
+    { "src": "/api/fb",                 "dest": "/api/fb.js"                 },
+    { "src": "/api/tt",                 "dest": "/api/tt.js"                 },
+    { "src": "/(.*)",                   "dest": "/$1"                        }
   ]
 }

